@@ -1,0 +1,69 @@
+base_url: "https://budget.canada.ca"
+
+# Years with no federal budget site slice in this corpus (documented gap).
+skip_years:
+  - 2020
+
+# Per-year discovery strategy: toc_report | plan_chapters | crawl_from_home
+years:
+  "2015":
+    strategy: plan_chapters
+    plan_prefix: "/2015/docs/plan/ch"
+    chapter_suffix_fr: "fra"
+    chapter_suffix_en: "eng"
+    max_chapter_probe: 10
+    # anx1-fra.html … under the same plan directory (probed up to this index)
+    plan_annex_probe: 8
+
+  "2016":
+    strategy: crawl_from_home
+    home_fr: "/2016/home-accueil-fr.html"
+    home_en: "/2016/home-accueil-en.html"
+    path_prefix: "/2016/"
+    max_pages: 200
+
+  "2017":
+    strategy: crawl_from_home
+    home_fr: "/2017/home-accueil-fr.html"
+    home_en: "/2017/home-accueil-en.html"
+    path_prefix: "/2017/"
+    max_pages: 200
+
+  "2018":
+    strategy: crawl_from_home
+    home_fr: "/2018/home-accueil-fr.html"
+    home_en: "/2018/home-accueil-en.html"
+    path_prefix: "/2018/"
+    max_pages: 200
+
+  "2019":
+    strategy: crawl_from_home
+    home_fr: "/2019/home-accueil-fr.html"
+    home_en: "/2019/home-accueil-en.html"
+    path_prefix: "/2019/"
+    max_pages: 250
+
+  "2021":
+    strategy: toc_report
+    toc_fr: "/2021/report-rapport/toc-tdm-fr.html"
+    toc_en: "/2021/report-rapport/toc-tdm-en.html"
+
+  "2022":
+    strategy: toc_report
+    toc_fr: "/2022/report-rapport/toc-tdm-fr.html"
+    toc_en: "/2022/report-rapport/toc-tdm-en.html"
+
+  "2023":
+    strategy: toc_report
+    toc_fr: "/2023/report-rapport/toc-tdm-fr.html"
+    toc_en: "/2023/report-rapport/toc-tdm-en.html"
+
+  "2024":
+    strategy: toc_report
+    toc_fr: "/2024/report-rapport/toc-tdm-fr.html"
+    toc_en: "/2024/report-rapport/toc-tdm-en.html"
+
+  "2025":
+    strategy: toc_report
+    toc_fr: "/2025/report-rapport/toc-tdm-fr.html"
+    toc_en: "/2025/report-rapport/toc-tdm-en.html"
