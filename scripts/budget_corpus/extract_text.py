@@ -42,6 +42,14 @@ _BOILERPLATE_SUBSTRINGS = (
 )
 
 
+def normalize_whitespace(text: str) -> str:
+    """Collapse runs of whitespace (including newlines/tabs/NBSP) to single spaces."""
+    if not text:
+        return ""
+    text = text.replace("\u00a0", " ")
+    return " ".join(text.split())
+
+
 def _strip_noise(soup: BeautifulSoup) -> None:
     for sel in ("script", "style", "nav", "header", "footer", "noscript"):
         for el in soup.find_all(sel):
@@ -83,10 +91,19 @@ def _main_root(soup: BeautifulSoup) -> Tag | None:
     return soup if isinstance(soup, Tag) else soup.find()
 
 
+def _strip_in_main_chrome(root: Tag) -> None:
+    """Remove PDF download wells and decorative banners still inside main content."""
+    for sel in ("a.gc-dwnld-lnk", ".well.gc-dwnld", "div.pageImg"):
+        for el in root.select(sel):
+            el.decompose()
+
+
 def _strip_main_navigation_and_sidebar(root: Tag) -> None:
     """Remove in-page TOC sidebars and Prev/TOC/Next navigation rows."""
     for el in root.select("div.onThisPage"):
         el.decompose()
+    for nav in root.select("nav.pagerNav"):
+        nav.decompose()
     for div in list(root.select("div.row")):
         if not isinstance(div, Tag):
             continue
@@ -128,6 +145,7 @@ def prepare_content_tree(html: str) -> Tag | None:
     root = _main_root(soup)
     if not isinstance(root, Tag):
         return None
+    _strip_in_main_chrome(root)
     _strip_main_navigation_and_sidebar(root)
     _strip_archived_title_prefix(root)
     return root
@@ -153,7 +171,7 @@ def _visible_text_chunks(root: Tag) -> Iterable[str]:
                 continue
             name = child.name.lower()
             if name in _BLOCK_TAGS:
-                t = child.get_text(" ", strip=True)
+                t = normalize_whitespace(child.get_text(" ", strip=True))
                 if t:
                     yield t
             elif name in ("ul", "ol", "table", "section", "article", "div", "main"):
@@ -166,13 +184,13 @@ def _drop_boilerplate_paragraphs(text: str) -> str:
     """Remove paragraph blocks that are mostly archival / site boilerplate."""
     parts: list[str] = []
     for block in re.split(r"\n{2,}", text.strip()):
-        line = " ".join(block.split())
+        line = normalize_whitespace(block)
         low = line.lower()
         if not line:
             continue
         if len(line) < 500 and any(s in low for s in _BOILERPLATE_SUBSTRINGS):
             continue
-        parts.append(block.strip())
+        parts.append(line)
     out = "\n\n".join(parts)
     return re.sub(r"\n{3,}", "\n\n", out).strip()
 
@@ -182,6 +200,7 @@ def html_to_plain_text(html: str) -> str:
     Convert budget HTML to UTF-8 plain text: drop chrome and archival notices,
     prefer real chapter body (main when wb-cont sits on h1), strip Prev/TOC/Next
     rows and on-this-page sidebars, then emit block text with blank lines.
+    Each paragraph block is a single line (internal whitespace collapsed).
     """
     root = prepare_content_tree(html)
     if root is None:

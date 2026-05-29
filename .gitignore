@@ -32,6 +32,8 @@ coverage.xml
 
 # Jupyter
 .ipynb_checkpoints/
+data/figures/
+data/outputs/
 
 # OS
 .DS_Store

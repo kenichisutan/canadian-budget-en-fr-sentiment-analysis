@@ -13,7 +13,7 @@ Bilingual HTML snapshots and merged UTF-8 plain text from [budget.canada.ca](htt
 - `raw/{year}/manifest-fr.json` / `manifest-en.json` — ordered list of `{ "url", "file" }` used for reproducible merges.
 - `processed/{year}/` — `budget-{year}-{lang}.merged.html`, `budget-{year}-{lang}.txt`.
 
-Merged outputs keep **main narrative only**: archival banners (`gc-archv`, `#archive_box`), site header/footer, Prev/TOC/Next rows, “On this page” sidebars, and leading “Archived …” title labels are removed. Plain text also drops short paragraphs that match standard Government of Canada archival / feedback boilerplate. Raw snapshots under `raw/` are unchanged.
+Merged outputs keep **main narrative only**: archival banners (`gc-archv`, `#archive_box`), site header/footer, Prev/TOC/Next rows, “On this page” sidebars, PDF download wells, and leading “Archived …” title labels are removed. Plain text also drops short paragraphs that match standard Government of Canada archival / feedback boilerplate. **Each paragraph is one line** (internal newlines/tabs collapsed); paragraphs are separated by a blank line (`\n\n`). Raw snapshots under `raw/` are unchanged.
 
 ## Regeneration
 
@@ -41,6 +41,26 @@ After downloading **2024** (both languages):
 - **2015 plan (HTML):** chapter files use **two** naming schemes on the archive: `ch1-fra.html`–`ch2-fra.html`, then `ch3-0-fra.html`–`ch5-0-fra.html` (and the English `-eng` counterparts); see the [2015 chapter 3 (FR)](https://budget.canada.ca/2015/docs/plan/ch3-0-fra.html) page. The scraper probes both patterns, then `anx{n}-fra|eng` annex pages and `toc-tdm-fra|eng.html` when present.
 - **Sanity check:** run `wc -w data/corpora/federal-budget/processed/2024/budget-2024-*.txt` — merged word counts should be the same order of magnitude as the main budget PDF narrative (not identical, because annexes and tax detail pages differ).
 - **Spot alignment:** open paired raw files with the same basename (e.g. `chap3-fr.html` / `chap3-en.html`) and compare a few paragraphs.
+
+## Exploration notebooks
+
+From the repository root (so `scripts/budget_corpus` imports resolve):
+
+**Corpus EDA** — [`data/federal_budget_corpus_eda.ipynb`](../../federal_budget_corpus_eda.ipynb)
+
+```bash
+pip install -r requirements.txt -r requirements-notebook.txt
+jupyter notebook data/federal_budget_corpus_eda.ipynb
+```
+
+**Multilingual BERT sentiment** — [`data/federal_budget_sentiment_bert.ipynb`](../../federal_budget_sentiment_bert.ipynb)
+
+```bash
+pip install -r requirements.txt -r requirements-sentiment.txt
+jupyter notebook data/federal_budget_sentiment_bert.ipynb
+```
+
+Figures go to `data/figures/` (gitignored). Sentiment scores are cached in `data/outputs/` (gitignored). **Re-run sentiment/EDA notebooks** (or delete `data/outputs/*.csv`) after re-merging processed text so paragraph caches reflect whitespace-normalized extraction.
 
 ## Developer layout
 
