@@ -71,6 +71,9 @@ else:
     raise RuntimeError("Run from repo root or data/ so scripts/budget_corpus is found")
 
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+for _mod in list(sys.modules):
+    if _mod == "budget_corpus" or _mod.startswith("budget_corpus."):
+        del sys.modules[_mod]
 from budget_corpus.extract_text import extracted_main_inner_html, html_to_plain_text, normalize_whitespace
 from budget_corpus.paths import CONFIG_PATH, PROCESSED_ROOT, RAW_ROOT
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Comment, NavigableString, Tag
 
 
 _BLOCK_TAGS = frozenset(
@@ -134,6 +134,23 @@ def _parse_soup(html: str) -> BeautifulSoup:
         return BeautifulSoup(html, "html.parser")
 
 
+def _normalize_tree_text_nodes(root: Tag) -> None:
+    """Collapse runs of whitespace inside HTML text nodes (pretty-printed source)."""
+    skip_parents = frozenset({"pre", "script", "style"})
+    for node in list(root.find_all(string=True)):
+        if isinstance(node, Comment):
+            continue
+        if not isinstance(node, NavigableString):
+            continue
+        parent = node.parent
+        if parent and isinstance(parent, Tag) and parent.name.lower() in skip_parents:
+            continue
+        raw = str(node)
+        normalized = normalize_whitespace(raw)
+        if normalized != raw:
+            node.replace_with(normalized)
+
+
 def prepare_content_tree(html: str) -> Tag | None:
     """
     Parse HTML, remove site chrome and archival boilerplate, return the Tag subtree
@@ -148,6 +165,7 @@ def prepare_content_tree(html: str) -> Tag | None:
     _strip_in_main_chrome(root)
     _strip_main_navigation_and_sidebar(root)
     _strip_archived_title_prefix(root)
+    _normalize_tree_text_nodes(root)
     return root
 
 

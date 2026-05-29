@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from budget_corpus.extract_text import html_to_plain_text, normalize_whitespace
+from budget_corpus.extract_text import extracted_main_inner_html, html_to_plain_text, normalize_whitespace
 
 
 class NormalizeWhitespaceTests(unittest.TestCase):
@@ -34,6 +34,15 @@ class ExtractTextTests(unittest.TestCase):
         self.assertTrue(blocks)
         for block in blocks:
             self.assertNotIn("\n", block, msg=f"block contains newline: {block[:80]!r}")
+
+    def test_merged_html_fragment_has_no_double_spaces(self) -> None:
+        html = """<!DOCTYPE html><html><body><main>
+        <p>Les travailleurs et les  entreprises du Canada ont fait preuve d'une
+          résilience remarquable.</p>
+        </main></body></html>"""
+        inner = extracted_main_inner_html(html)
+        self.assertNotIn("  ", inner)
+        self.assertIn("les entreprises", inner)
 
     def test_chap1_en_regression(self) -> None:
         repo = Path(__file__).resolve().parents[2]

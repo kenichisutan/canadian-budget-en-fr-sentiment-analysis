@@ -109,6 +109,9 @@ else:
     raise RuntimeError("Run from repo root or data/ so scripts/budget_corpus is found")
 
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+for _mod in list(sys.modules):
+    if _mod == "budget_corpus" or _mod.startswith("budget_corpus."):
+        del sys.modules[_mod]
 from budget_corpus.extract_text import html_to_plain_text, normalize_whitespace
 from budget_corpus.paths import CONFIG_PATH, RAW_ROOT
 
@@ -317,9 +320,19 @@ def load_or_score(
     rerun: bool,
     desc: str,
 ) -> pd.DataFrame:
+    key_cols = ["year", "lang", "file", "paragraph_idx"]
+    corpus_cols = {"text", "words", "basename", "doc_type"}
     if cache_path.exists() and not rerun:
-        out = pd.read_csv(cache_path)
-        print(f"Loaded cache: {cache_path} ({len(out):,} rows)")
+        cached = pd.read_csv(cache_path)
+        print(f"Loaded cache: {cache_path} ({len(cached):,} rows)")
+        score_cols = [c for c in cached.columns if c not in key_cols and c not in corpus_cols]
+        out = df.merge(cached[key_cols + score_cols], on=key_cols, how="left")
+        missing = out["pred_label"].isna().sum() if "pred_label" in out.columns else 0
+        if missing:
+            print(
+                f"Note: {missing:,} paragraphs lack cached scores (corpus changed?). "
+                f"Set rerun=True to re-score."
+            )
         return out
     clf = make_classifier(model_id)
     out = run_sentiment(df, clf, desc=desc)
@@ -719,7 +732,7 @@ def show_examples(lang: str, label: str, n: int = 3) -> None:
     sub = sub.nlargest(n, score_col)
     print(f"\\n=== {lang.upper()} — top {n} {label} paragraphs ===")
     for _, row in sub.iterrows():
-        snippet = row["text"].replace("\\n", " ")
+        snippet = normalize_whitespace(row["text"].replace("\\n", " "))
         print(f"[{row['year']} {row['basename']}] (p={row[score_col]:.3f}) {snippet[:280]}...\\n")
 
 
@@ -737,7 +750,8 @@ for lang in ("en", "fr"):
 - **XLM-RoBERTa** was trained on social media; **FinBERT** on financial phrases; **CamemBERT** on French tweets. Absolute scores are not comparable across models — compare **trends** and **label mixes**.
 - **FinBERT / CamemBERT** are applied only to their native language; do not compare raw EN FinBERT scores to FR CamemBERT scores as if they were on the same scale.
 - Structural EN–FR **pair agreement** uses matching file slug + paragraph index, not TMX alignment (see EDA notebook for 2025 sentence pairs).
-- Set `NARRATIVE_ONLY = False` to include annexes; set `RERUN_XLM_INFERENCE` / `RERUN_MONO_INFERENCE` to True after corpus or model changes."""
+- Set `NARRATIVE_ONLY = False` to include annexes; set `RERUN_XLM_INFERENCE` / `RERUN_MONO_INFERENCE` to True after corpus or model changes.
+- Cached sentiment scores are merged with **fresh paragraph text** on each run, so whitespace or extraction fixes apply without re-inferring."""
         )
     )
 
