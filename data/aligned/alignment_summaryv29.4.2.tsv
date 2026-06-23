@@ -1,0 +1,2 @@
+document	total_steps	detailed_steps	bilingual_steps	gap_steps	final_score	coverage_src	coverage_tgt	precision	recall	f1
+budget-2025	1524	3001	1524	0	922.203352	1.000000	1.000000	0.998031	1.000000	0.999015
